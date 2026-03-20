@@ -1,7 +1,5 @@
 ## SQL — Structured Query Language
-### Complete End-to-End Notes + Interview Preparation
 ---
-
 ### Table of Contents
 
 1. [What is SQL?](#1-what-is-sql)
