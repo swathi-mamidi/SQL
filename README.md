@@ -1,5 +1,4 @@
 ## SQL — Structured Query Language
----
 ### Table of Contents
 
 1. [What is SQL?](#1-what-is-sql)
