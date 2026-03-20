@@ -38,7 +38,7 @@ SQL (Structured Query Language) is the standard language for **relational databa
 
 | Category | Full Form | Purpose | Commands |
 |---|---|---|---|
-| DDL | Data Definition Language | Structure of DB | `CREATE`, `ALTER`, `DROP`, `TRUNCATE`, `RENAME` |
+| DDL | Data Definition Language | Structure of DB | `CREATE`, `ALTER`, `DROP`, `TRUNCATE`|
 | DML | Data Manipulation Language | Data inside tables | `INSERT`, `UPDATE`, `DELETE`, `MERGE` |
 | DQL | Data Query Language | Retrieve data | `SELECT` |
 | DCL | Data Control Language | Permissions | `GRANT`, `REVOKE` |
