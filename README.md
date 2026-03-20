@@ -1,11 +1,8 @@
-# 🗄️ SQL — Structured Query Language
+## SQL — Structured Query Language
 ### Complete End-to-End Notes + Interview Preparation
-
-> **Banner image**: Add the SVG banner above this heading in your repo's README.
-
 ---
 
-## 📋 Table of Contents
+### Table of Contents
 
 1. [What is SQL?](#1-what-is-sql)
 2. [SQL Categories (DDL, DML, DQL, DCL, TCL)](#2-sql-categories)
@@ -32,7 +29,7 @@
 
 ---
 
-## 1. What is SQL?
+### 1. What is SQL?
 
 SQL (Structured Query Language) is the standard language for **relational database management systems (RDBMS)**. It lets you create, read, update, and delete data stored in tables.
 
@@ -40,7 +37,7 @@ SQL (Structured Query Language) is the standard language for **relational databa
 
 ---
 
-## 2. SQL Categories
+### 2. SQL Categories
 
 | Category | Full Form | Purpose | Commands |
 |---|---|---|---|
@@ -52,7 +49,7 @@ SQL (Structured Query Language) is the standard language for **relational databa
 
 ---
 
-## 3. Data Types
+### 3. Data Types
 
 ```sql
 -- Numeric
@@ -79,7 +76,7 @@ JSON         -- supported in MySQL 5.7+, PostgreSQL
 
 ---
 
-## 4. DDL
+### 4. DDL
 
 ```sql
 -- Create a table
@@ -114,7 +111,7 @@ TRUNCATE TABLE employees;
 
 ---
 
-## 5. DML
+### 5. DML
 
 ```sql
 -- Insert single row
@@ -147,7 +144,7 @@ WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name);
 
 ---
 
-## 6. DQL
+### 6. DQL
 
 ```sql
 -- Basic SELECT
@@ -176,7 +173,7 @@ FROM employees;
 
 ---
 
-## 7. Clauses
+### 7. Clauses
 
 ```sql
 -- WHERE (filter rows)
@@ -206,7 +203,7 @@ HAVING AVG(salary) > 70000;
 
 ---
 
-## 8. JOINs
+### 8. JOINs
 
 ```sql
 -- Sample tables: employees(emp_id, name, dept_id), departments(dept_id, dept_name)
@@ -246,7 +243,7 @@ JOIN order_items oi ON o.order_id = oi.order_id AND oi.quantity > 1;
 
 ---
 
-## 9. Subqueries & CTEs
+### 9. Subqueries & CTEs
 
 ```sql
 -- Subquery in WHERE
@@ -306,7 +303,7 @@ SELECT * FROM org_chart ORDER BY level;
 
 ---
 
-## 10. Aggregate Functions
+### 10. Aggregate Functions
 
 ```sql
 SELECT
@@ -326,7 +323,7 @@ FROM employees;
 
 ---
 
-## 11. Window Functions
+### 11. Window Functions
 
 Window functions compute across a "window" of related rows **without collapsing them** (unlike GROUP BY).
 
@@ -369,7 +366,7 @@ FROM employees;
 
 ---
 
-## 12. Indexes
+### 12. Indexes
 
 ```sql
 -- Create index (speeds up reads on large tables)
@@ -399,7 +396,7 @@ SHOW INDEX FROM employees;
 
 ---
 
-## 13. Constraints
+### 13. Constraints
 
 ```sql
 CREATE TABLE orders (
@@ -419,7 +416,7 @@ CREATE TABLE orders (
 
 ---
 
-## 14. Views
+### 14. Views
 
 ```sql
 -- Create a view (stored query, not stored data)
@@ -448,7 +445,7 @@ REFRESH MATERIALIZED VIEW dept_summary;
 
 ---
 
-## 15. Stored Procedures & Functions
+### 15. Stored Procedures & Functions
 
 ```sql
 -- Stored Procedure (MySQL)
@@ -479,7 +476,7 @@ SELECT name, annual_salary(salary) AS yearly FROM employees;
 
 ---
 
-## 16. Triggers
+### 16. Triggers
 
 ```sql
 -- Log salary changes automatically
@@ -506,7 +503,7 @@ END;
 
 ---
 
-## 17. Transactions & ACID
+### 17. Transactions & ACID
 
 ```sql
 -- Transaction block
@@ -551,7 +548,7 @@ COMMIT;
 
 ---
 
-## 18. Normalization
+### 18. Normalization
 
 Normalization removes redundancy and ensures data integrity.
 
@@ -567,7 +564,7 @@ Normalization removes redundancy and ensures data integrity.
 
 ---
 
-## 19. Performance & Optimization
+### 19. Performance & Optimization
 
 ```sql
 -- EXPLAIN / EXPLAIN ANALYZE (see query execution plan)
@@ -593,7 +590,7 @@ SELECT * FROM orders WHERE order_date >= '2024-01-01' AND order_date < '2025-01-
 
 ---
 
-## 20. Interview Questions — Conceptual
+### 20. Interview Questions — Conceptual
 
 ### Fundamentals
 1. What is the difference between `DELETE`, `TRUNCATE`, and `DROP`?
@@ -635,7 +632,7 @@ SELECT * FROM orders WHERE order_date >= '2024-01-01' AND order_date < '2025-01-
 
 ---
 
-## 21. Interview Questions — Query Writing
+### 21. Interview Questions — Query Writing
 
 > Use this schema for all problems:
 > - `employees(emp_id, name, department, salary, hire_date, manager_id)`
@@ -669,7 +666,7 @@ SELECT * FROM orders WHERE order_date >= '2024-01-01' AND order_date < '2025-01-
 
 ---
 
-## 22. Real-World Scenario Questions
+### 22. Real-World Scenario Questions
 
 These test system thinking, not just syntax.
 
@@ -691,7 +688,7 @@ These test system thinking, not just syntax.
 
 ---
 
-## 📌 Quick Reference Cheat Sheet
+### 📌 Quick Reference Cheat Sheet
 
 ```sql
 -- Pattern matching
@@ -729,4 +726,3 @@ IIF(condition, true_val, false_val)  -- SQL Server only
 
 ---
 
-*Happy querying! ⚡ — Add this file as `SQL_Notes.md` in your GitHub repo.*
