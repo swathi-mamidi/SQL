@@ -1,725 +1,653 @@
-## SQL — Structured Query Language
-### Table of Contents
+# SQL — Complete Study Notes
+
+> **Structured Query Language** — A complete reference from basics to advanced concepts, including tricky scenarios and interview questions.
+
+---
+
+## Table of Contents
 
 1. [What is SQL?](#1-what-is-sql)
-2. [SQL Categories (DDL, DML, DQL, DCL, TCL)](#2-sql-categories)
+2. [SQL Case Sensitivity & Collation](#2-sql-case-sensitivity--collation)
 3. [Data Types](#3-data-types)
-4. [DDL — Creating & Managing Structure](#4-ddl)
-5. [DML — Inserting, Updating, Deleting](#5-dml)
-6. [DQL — SELECT & Querying](#6-dql)
-7. [Clauses — WHERE, ORDER BY, GROUP BY, HAVING](#7-clauses)
-8. [JOINs](#8-joins)
-9. [Subqueries & CTEs](#9-subqueries--ctes)
-10. [Aggregate Functions](#10-aggregate-functions)
-11. [Window Functions](#11-window-functions)
-12. [Indexes](#12-indexes)
-13. [Constraints](#13-constraints)
-14. [Views](#14-views)
-15. [Stored Procedures & Functions](#15-stored-procedures--functions)
-16. [Triggers](#16-triggers)
-17. [Transactions & ACID](#17-transactions--acid)
-18. [Normalization](#18-normalization)
-19. [Performance & Optimization](#19-performance--optimization)
-20. [Interview Questions — Conceptual](#20-interview-questions--conceptual)
-21. [Interview Questions — Query Writing](#21-interview-questions--query-writing)
-22. [Real-World Scenario Questions](#22-real-world-scenario-questions)
+4. [SQL Commands](#4-sql-commands)
+5. [Constraints](#5-constraints)
+6. [Clauses](#6-clauses)
+7. [Operators](#7-operators)
+8. [Functions](#8-functions)
+9. [Order of Execution](#9-order-of-execution)
+10. [Joins](#10-joins)
+11. [Set Operations](#11-set-operations)
+12. [Views & Stored Procedures](#12-views--stored-procedures)
+13. [Subqueries, Derived Tables, CTEs & CASE](#13-subqueries-derived-tables-ctes--case-statement)
+14. [ACID Properties & Triggers](#14-acid-properties--triggers)
+15. [SQL Normalization](#15-sql-normalization)
 
 ---
 
-### 1. What is SQL?
+## 1. What is SQL?
 
-SQL (Structured Query Language) is the standard language for **relational database management systems (RDBMS)**. It lets you create, read, update, and delete data stored in tables.
+**SQL (Structured Query Language)** helps perform **CRUD Operations** on databases.
 
-**Popular RDBMS:** MySQL, PostgreSQL, SQL Server (T-SQL), Oracle, SQLite
+| Term | Definition |
+|------|-----------|
+| **DB (Database)** | The actual collection of organized data |
+| **DBMS** | Software that interacts with the user, applications, and the database to capture and analyze data via CRUD operations |
+| **RDBMS** | Data stored in rows and columns; SQL is used to retrieve and manipulate it |
+
+### Why SQL?
+- **Traditional Database** → Data stored in folder format → difficult to retrieve/modify
+- **RDBMS** → Data in rows & columns → SQL makes CRUD operations easy
+
+### Why MySQL?
+- Easy to understand
+- Free and open source
 
 ---
 
-### 2. SQL Categories
-
-| Category | Full Form | Purpose | Commands |
-|---|---|---|---|
-| DDL | Data Definition Language | Structure of DB | `CREATE`, `ALTER`, `DROP`, `TRUNCATE`|
-| DML | Data Manipulation Language | Data inside tables | `INSERT`, `UPDATE`, `DELETE`, `MERGE` |
-| DQL | Data Query Language | Retrieve data | `SELECT` |
-| DCL | Data Control Language | Permissions | `GRANT`, `REVOKE` |
-| TCL | Transaction Control Language | Manage transactions | `COMMIT`, `ROLLBACK`, `SAVEPOINT` |
+> **Interview Question**
+>
+> **The "Why":** Why would a company choose a Relational Database (RDBMS) over a simple NoSQL or File-based system for financial transactions?
 
 ---
 
-### 3. Data Types
+## 2. SQL Case Sensitivity & Collation
+
+SQL **keywords** are case-insensitive (`SELECT` = `select` = `Select`).
+However, **data inside cells** may or may not be case-sensitive depending on **collation**.
+
+### What is Collation?
+> A set of rules that defines how characters are **compared and sorted** in a database column.
+
+### Examples
 
 ```sql
--- Numeric
-INT, BIGINT, SMALLINT, TINYINT
-DECIMAL(p, s), NUMERIC(p, s)    -- exact precision (use for money)
-FLOAT, DOUBLE                    -- approximate
+-- Case-insensitive search (default behavior)
+SELECT product_id
+FROM product
+WHERE product_name = 'LaPTOP';
 
--- String
-VARCHAR(n)   -- variable length, up to n chars
-CHAR(n)      -- fixed length (padded with spaces)
-TEXT         -- large text blocks
-
--- Date/Time
-DATE         -- YYYY-MM-DD
-TIME         -- HH:MM:SS
-DATETIME     -- YYYY-MM-DD HH:MM:SS
-TIMESTAMP    -- auto-updated (great for audit columns)
-
--- Other
-BOOLEAN / BOOL
-BLOB         -- binary large object
-JSON         -- supported in MySQL 5.7+, PostgreSQL
+-- Case-sensitive search using BINARY
+SELECT product_id
+FROM product
+WHERE BINARY product_name = 'LaPTOP';
 ```
 
 ---
 
-### 4. DDL
+> 💡 **Tricky Scenarios**
+>
+> **A. Default Collation & Keywords**
+> Since SQL is case-insensitive for keywords, does that mean data inside cells (like `'Apple'` vs `'apple'`) is also always treated as the same during a `WHERE` clause filter?
+>
+> **Answer:** No. It depends on the column's **collation**. Use `BINARY` or a `_bin` collation to enforce case-sensitive data comparison.
+
+> **B. Password Security**
+> If passwords are stored in a `VARCHAR` column with `utf8mb4_0900_ai_ci` collation, can a user log in with `"p@ssword123"` when their password is `"P@ssword123"`?
+>
+> **Answer:** Yes — `_ci` (Case Insensitive) treats them as the same. For passwords, always use `BINARY` or `_bin` collation so `"A"` ≠ `"a"`.
+
+> **C. UNIQUE Constraint & Collation**
+> A table has a `UNIQUE` constraint on `username`. `"Admin"` exists. Can `"admin"` be inserted?
+>
+> **Answer:**
+> - `_ci` collation →  Throws **Duplicate Entry** error
+> - `_cs` or `_bin` collation → Both are allowed
+
+> **D. GROUP BY with Mixed Case**
+> Cities list: `['London', 'london', 'LONDON', 'Paris']`
+> ```sql
+> SELECT city, COUNT(*) FROM travel GROUP BY city;
+> ```
+> **Answer:** Returns **2 rows** — `London (3)` and `Paris (1)`. All London variants are treated as identical under `_ci` collation.
+
+---
+
+## 3. Data Types
+
+### Numeric Data Types
+
+| Category | Types |
+|----------|-------|
+| **Fixed Integer** | `TINYINT`, `SMALLINT`, `MEDIUMINT`, `INT`, `BIGINT` |
+| **Fixed Decimal** | `DECIMAL(m, d)` |
+| **Approximate** | `FLOAT` (4 bytes), `REAL`, `DOUBLE` (8 bytes), `PRECISION` |
+
+### String Data Types
+
+| Category | Types |
+|----------|-------|
+| **Character String** | `CHAR`, `VARCHAR`, `TEXT`, `ENUM`, `SET` |
+| **Binary String** | `BINARY`, `VARBINARY`, `BLOB` |
+
+### Date & Time Data Types
+
+| Type | Description |
+|------|-------------|
+| `DATE` | Date only |
+| `TIME` | Time only |
+| `DATETIME` | Date + Time (not timezone-aware) |
+| `TIMESTAMP` | Date + Time (timezone-aware, uses server timezone) |
+| `YEAR` | Year only |
+
+---
+
+> **Interview Questions**
+>
+> **Q1.** What data type would you use to store distance rounded to the nearest mile?
+>
+> **Answer:** `INTEGER` (or `INT`) for whole numbers. Use `DECIMAL` if precision is needed.
+
+> **The "Why": VARCHAR vs TEXT**
+>
+> Why use `VARCHAR(255)` instead of `TEXT` for every string column?
+>
+> | | VARCHAR | TEXT |
+> |--|---------|------|
+> | **Storage** | Stored **inline** in the table row | Stored **off-row** with a pointer |
+> | **Performance** | Faster — data found directly | Slower — requires an extra disk read |
+>
+> Use `VARCHAR` for small-to-medium strings for better performance.
+
+> **Tricky Scenario: DATETIME vs TIMESTAMP**
+>
+> What is the functional difference when a user moves from New York to London?
+>
+> - `TIMESTAMP` → Adjusts to the **server's timezone**
+> - `DATETIME` → Stores as-is, **not timezone-dependent**
+
+> **The "Decimal" Logic: Money Storage**
+>
+> Why is `DECIMAL` preferred over `FLOAT` or `DOUBLE` for money?
+>
+> - `FLOAT`/`DOUBLE` → **Approximate** → `0.1 + 0.2 = 0.30000000000000004` ❌
+> - `DECIMAL` → **Fixed-Point** → Each digit preserved exactly ✅
+>
+> In banking, floating-point errors accumulate into massive discrepancies.
+
+---
+
+## 4. SQL Commands
+
+| Category | Commands |
+|----------|----------|
+| **DDL** (Data Definition Language) | `CREATE`, `ALTER`, `DROP`, `TRUNCATE` |
+| **DML** (Data Manipulation Language) | `INSERT`, `UPDATE`, `DELETE` |
+| **DQL** (Data Query Language) | `SELECT` |
+| **DCL** (Data Control Language) | `GRANT`, `REVOKE` |
+| **TCL** (Transaction Control Language) | `SAVEPOINT`, `ROLLBACK`, `COMMIT` |
+
+---
+
+> **Interview Questions**
+>
+> **The "Why": TRUNCATE (DDL) vs DELETE (DML)**
+>
+> Both remove data — so why are they classified differently?
+>
+> | | DELETE | TRUNCATE |
+> |--|--------|----------|
+> | **Acts on** | The **data** inside the table | The **table structure** itself |
+> | **Type** | DML | DDL |
+> | **Rollback** | Can be rolled back | Cannot be rolled back (in most DBs) |
+> | **WHERE clause** | Supported | Not supported |
+
+> **Tricky Scenario:**
+>
+> If you run a `DELETE` without a `COMMIT` in a transaction, can another user see the changes? What about a `DROP` command?
+>
+> - `DELETE` without `COMMIT` → Changes are **not visible** to others (transaction is pending)
+> - `DROP` → Is **auto-committed** (DDL commands implicitly commit)
+
+---
+
+## 5. Constraints
+
+| Constraint | Description |
+|------------|-------------|
+| `NOT NULL` | Column must have a value |
+| `UNIQUE KEY` | All values in column must be unique |
+| `PRIMARY KEY` | Uniquely identifies each row; NOT NULL + UNIQUE |
+| `FOREIGN KEY` | Links to PRIMARY KEY of another table |
+| `COMPOSITE KEY` | A key made of two or more columns |
+| `DEFAULT` | Assigns a default value if none provided |
+| `CHECK` | Validates data against a condition |
+
+---
+
+> **Interview Questions**
+>
+> **The "Why": Multiple UNIQUE Keys vs PRIMARY KEY**
+>
+> Can a table have multiple `UNIQUE` keys? If so, why do we still need a `PRIMARY KEY`?
+>
+> **Answer:** Yes, a table can have multiple `UNIQUE` keys. But `PRIMARY KEY` is still needed for:
+> - Structural identity of each row
+> - Establishing relationships with other tables via `FOREIGN KEY`
+> - A `PRIMARY KEY` cannot be `NULL`; a `UNIQUE` key can
+
+> **FOREIGN KEY & Deletion Behavior**
+>
+> Can you delete a parent row while a child row still references it?
+>
+> **Answer:** By default → Throws an error.
+>
+> | Option | Behavior |
+> |--------|----------|
+> | `ON DELETE CASCADE` | Deletes all child rows automatically |
+> | `ON DELETE SET NULL` | Sets child's FK column to `NULL` |
+
+> **Can referential integrity be enforced without using `FOREIGN KEY` keyword?**
+>
+> **Answer:** Yes — through application-level checks or triggers, though it's less reliable than DB-level constraints.
+
+---
+
+## 6. Clauses
+
+| Clause | Purpose |
+|--------|---------|
+| `WHERE` | Filters rows **before** grouping |
+| `GROUP BY` | Groups rows sharing a value |
+| `HAVING` | Filters groups **after** `GROUP BY` |
+| `ORDER BY` | Sorts the result set |
+| `LIMIT` | Restricts number of rows returned |
+| `TOP` | Returns top N rows (SQL Server) |
+| `FROM` | Specifies source table |
+| `AND` / `OR` | Logical row filtering |
+
+### LIKE Pattern Matching
+
+| Pattern | Meaning |
+|---------|---------|
+| `%` | Zero, one, or multiple characters |
+| `_` | Exactly one character |
 
 ```sql
--- Create a table
-CREATE TABLE employees (
-    emp_id     INT PRIMARY KEY AUTO_INCREMENT,
-    name       VARCHAR(100) NOT NULL,
-    department VARCHAR(50),
-    salary     DECIMAL(10, 2),
-    hire_date  DATE,
-    manager_id INT,
-    FOREIGN KEY (manager_id) REFERENCES employees(emp_id)
-);
+-- Starts with 'a'
+SELECT * FROM products WHERE name LIKE 'a%';
 
--- Add a column
-ALTER TABLE employees ADD COLUMN email VARCHAR(255);
-
--- Modify a column
-ALTER TABLE employees MODIFY COLUMN salary DECIMAL(12, 2);
-
--- Rename a column (PostgreSQL / MySQL 8+)
-ALTER TABLE employees RENAME COLUMN name TO full_name;
-
--- Drop a column
-ALTER TABLE employees DROP COLUMN email;
-
--- Drop table
-DROP TABLE employees;
-
--- Truncate (deletes all rows, resets auto-increment, no rollback in most DBs)
-TRUNCATE TABLE employees;
+-- 'a' is in the second position
+SELECT * FROM products WHERE name LIKE '_a%';
 ```
 
 ---
 
-### 5. DML
+> **Interview Questions**
+>
+> **The "Why": WHERE vs HAVING**
+>
+> | | WHERE | HAVING |
+> |--|-------|--------|
+> | **Filters** | Individual rows | Grouped data |
+> | **Timing** | Before `GROUP BY` | After `GROUP BY` |
+> | **Aggregate functions** | Cannot use | Can use |
+> | **Used with** | Any query | Typically with `GROUP BY` |
 
-```sql
--- Insert single row
-INSERT INTO employees (name, department, salary, hire_date)
-VALUES ('Aarav Shah', 'Engineering', 85000.00, '2023-06-15');
-
--- Insert multiple rows
-INSERT INTO employees (name, department, salary, hire_date) VALUES
-('Priya Reddy', 'HR', 60000.00, '2022-01-10'),
-('Ravi Kumar', 'Finance', 72000.00, '2021-09-01');
-
--- Update
-UPDATE employees
-SET salary = salary * 1.10
-WHERE department = 'Engineering';
-
--- Delete specific rows
-DELETE FROM employees WHERE emp_id = 5;
-
--- Upsert (INSERT or UPDATE if exists) — MySQL
-INSERT INTO employees (emp_id, name, salary) VALUES (1, 'Aarav Shah', 90000)
-ON DUPLICATE KEY UPDATE salary = VALUES(salary);
-
--- MERGE (SQL Server / Oracle)
-MERGE INTO target_table AS t
-USING source_table AS s ON t.id = s.id
-WHEN MATCHED THEN UPDATE SET t.salary = s.salary
-WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name);
-```
+> **Tricky Scenario: HAVING without GROUP BY**
+>
+> ```sql
+> SELECT SUM(salary) FROM Employees HAVING SUM(salary) > 1000000;
+> ```
+> **Answer:** Yes — it treats the **entire table as one group**. Returns the sum only if total payroll exceeds 1,000,000.
 
 ---
 
-### 6. DQL
+## 7. Operators
 
-```sql
--- Basic SELECT
-SELECT * FROM employees;
-SELECT name, department, salary FROM employees;
+| Category | Operators |
+|----------|-----------|
+| **Arithmetic** | `+`, `-`, `*`, `/`, `%` |
+| **Assignment** | `+=`, `-=`, `*=`, `/=`, `%=` |
+| **Comparison** | `<`, `>`, `<=`, `>=`, `=`, `!=` / `<>` |
+| **Logical** | `AND` (`&&`), `OR` (`\|\|`), `NOT` |
+| **Bitwise** | `&`, `^` (XOR), `\|`, `~` (inversion) |
 
--- Aliasing
-SELECT name AS employee_name, salary * 12 AS annual_salary
-FROM employees;
-
--- DISTINCT
-SELECT DISTINCT department FROM employees;
-
--- LIMIT / OFFSET (pagination)
-SELECT * FROM employees ORDER BY salary DESC LIMIT 10 OFFSET 20;
-
--- CASE expression
-SELECT name,
-    CASE
-        WHEN salary >= 100000 THEN 'Senior'
-        WHEN salary >= 60000  THEN 'Mid'
-        ELSE 'Junior'
-    END AS grade
-FROM employees;
-```
+> Note: `//` (floor division) is **not** a standard SQL operator.
 
 ---
 
-### 7. Clauses
-
-```sql
--- WHERE (filter rows)
-SELECT * FROM employees WHERE department = 'Engineering' AND salary > 70000;
-SELECT * FROM employees WHERE department IN ('HR', 'Finance');
-SELECT * FROM employees WHERE name LIKE 'A%';      -- starts with A
-SELECT * FROM employees WHERE hire_date BETWEEN '2022-01-01' AND '2023-12-31';
-SELECT * FROM employees WHERE manager_id IS NULL;   -- top-level managers
-
--- ORDER BY
-SELECT * FROM employees ORDER BY salary DESC, name ASC;
-
--- GROUP BY
-SELECT department, COUNT(*) AS total, AVG(salary) AS avg_salary
-FROM employees
-GROUP BY department;
-
--- HAVING (filter after aggregation — unlike WHERE which filters before)
-SELECT department, AVG(salary) AS avg_salary
-FROM employees
-GROUP BY department
-HAVING AVG(salary) > 70000;
-
--- Execution order (important for interviews!)
--- FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT
-```
+> **Tricky Scenario**
+>
+> Why does `SELECT * FROM users WHERE age != NULL` return **zero results**, even if there are users with no age listed?
+>
+> **Answer:** `NULL` represents **"Unknown"** — not zero, not empty. You cannot compare with `NULL` using `!=` or `=`.
+>
+> Correct approach:
+> ```sql
+> SELECT * FROM users WHERE age IS NULL;
+> SELECT * FROM users WHERE age IS NOT NULL;
+> ```
 
 ---
 
-### 8. JOINs
+## 8. Functions
 
-```sql
--- Sample tables: employees(emp_id, name, dept_id), departments(dept_id, dept_name)
+### a. Aggregate Functions
 
--- INNER JOIN — only matching rows from both tables
-SELECT e.name, d.dept_name
-FROM employees e
-INNER JOIN departments d ON e.dept_id = d.dept_id;
+| Function | Description |
+|----------|-------------|
+| `COUNT()` | Counts rows |
+| `SUM()` | Sum of values |
+| `AVG()` | Average of values |
+| `MIN()` | Minimum value |
+| `MAX()` | Maximum value |
 
--- LEFT JOIN — all rows from left, matched rows from right (NULL if no match)
-SELECT e.name, d.dept_name
-FROM employees e
-LEFT JOIN departments d ON e.dept_id = d.dept_id;
+**Miscellaneous:**
 
--- RIGHT JOIN — all rows from right, matched rows from left
-SELECT e.name, d.dept_name
-FROM employees e
-RIGHT JOIN departments d ON e.dept_id = d.dept_id;
-
--- FULL OUTER JOIN — all rows from both tables
-SELECT e.name, d.dept_name
-FROM employees e
-FULL OUTER JOIN departments d ON e.dept_id = d.dept_id;
-
--- CROSS JOIN — cartesian product (every combination)
-SELECT e.name, d.dept_name FROM employees e CROSS JOIN departments d;
-
--- SELF JOIN — join a table to itself (e.g., find manager names)
-SELECT e.name AS employee, m.name AS manager
-FROM employees e
-LEFT JOIN employees m ON e.manager_id = m.emp_id;
-
--- Join on multiple conditions
-SELECT * FROM orders o
-JOIN order_items oi ON o.order_id = oi.order_id AND oi.quantity > 1;
-```
+| Function | Description |
+|----------|-------------|
+| `ABS()` | Absolute value |
+| `ROUND()` | Rounds a number |
+| `CEIL()` / `CEILING()` | Rounds up |
+| `FLOOR()` | Rounds down |
 
 ---
 
-### 9. Subqueries & CTEs
+> **Tricky Scenario: COUNT(*) vs COUNT(column)**
+>
+> | | COUNT(*) | COUNT(column_name) |
+> |--|----------|-------------------|
+> | Counts | Every row | Only rows where column is **NOT NULL** |
+
+> **Random 10 Rows:**
+> ```sql
+> SELECT * FROM table_name ORDER BY RAND() LIMIT 10;
+> ```
+
+> **Handling NULL with default value:**
+> ```sql
+> -- Returns 50 if price is NULL
+> SELECT name, COALESCE(price, 50) FROM products;
+> -- MySQL specific
+> SELECT name, IFNULL(price, 50) FROM products;
+> ```
+
+---
+
+### b. Date & Time Functions
+
+| Function | Description |
+|----------|-------------|
+| `NOW()` | Current date and time |
+| `CURDATE()` / `CURRENT_DATE()` | Current date |
+| `CURTIME()` / `CURRENT_TIME()` | Current time |
+| `DATE()` | Extracts date part |
+| `DATE_ADD()` | Adds interval to date |
+| `DATE_SUB()` | Subtracts interval from date |
+| `DATEDIFF()` | Difference between two dates |
+| `TO_DAYS()` | Converts date to day number |
+
+### DATE_FORMAT() Specifiers
+
+| Specifier | Output |
+|-----------|--------|
+| `%a` | Abbreviated weekday (Mon, Tue...) |
+| `%b` | Abbreviated month (Jan–Dec) |
+| `%c` | Month numeric (1–12) |
+| `%d` | Day of month (01–31) |
+| `%H` | Hour 24-hour clock |
+| `%h` | Hour 12-hour clock |
+| `%i` | Minutes |
+| `%S` / `%s` | Seconds |
+
+---
+
+### c. String Functions
+
+| Function | Description |
+|----------|-------------|
+| `CONCAT()` | Joins strings |
+| `CHAR_LENGTH()` | Number of **characters** |
+| `LENGTH()` | Number of **bytes** |
+| `UPPER()` | Converts to uppercase |
+| `LOWER()` | Converts to lowercase |
+| `REPLACE()` | Replaces substring |
+| `SUBSTRING()` / `SUBSTR()` | Extracts part of string |
+| `LEFT()` | Left N characters |
+| `RIGHT()` | Right N characters |
+| `TRIM()` | Removes leading/trailing spaces |
+| `REVERSE()` | Reverses string |
+| `ASCII()` | ASCII value of character |
+| `CHAR()` | Character from ASCII number |
+| `LPAD()` | Left-pads string |
+| `RPAD()` | Right-pads string |
+
+---
+
+> **Interview Questions**
+>
+> **CHAR_LENGTH() vs LENGTH()**
+>
+> | | CHAR_LENGTH() | LENGTH() |
+> |--|---------------|----------|
+> | Counts | Number of **characters** | Number of **bytes** |
+> | Difference | Same for ASCII | Different for multi-byte characters (e.g., UTF-8 emojis) |
+
+> **ASCII() vs CHAR()**
+>
+> | | ASCII() | CHAR() |
+> |--|---------|--------|
+> | Input | A character | A number |
+> | Output | Its ASCII number | The character for that ASCII number |
+
+---
+
+### d. Window Functions
+
+#### Ranking Functions
+
+| Function | Behavior on Ties |
+|----------|-----------------|
+| `RANK()` | Skips next rank(s) after a tie |
+| `DENSE_RANK()` | Does **not** skip ranks after a tie |
+| `ROW_NUMBER()` | Always unique, no tie handling |
+| `PERCENT_RANK()` | Relative rank as a percentage |
+
+#### Syntax
 
 ```sql
--- Subquery in WHERE
-SELECT name, salary FROM employees
-WHERE salary > (SELECT AVG(salary) FROM employees);
-
--- Subquery in FROM (derived table)
-SELECT dept_name, avg_sal
-FROM (
-    SELECT department AS dept_name, AVG(salary) AS avg_sal
-    FROM employees
-    GROUP BY department
-) AS dept_stats
-WHERE avg_sal > 70000;
-
--- Correlated subquery (references outer query — row by row)
-SELECT name, salary FROM employees e
-WHERE salary > (
-    SELECT AVG(salary) FROM employees
-    WHERE department = e.department   -- correlated
-);
-
--- EXISTS / NOT EXISTS
-SELECT name FROM employees e
-WHERE EXISTS (
-    SELECT 1 FROM orders o WHERE o.manager_id = e.emp_id
-);
-
--- CTE (Common Table Expression) — readable, reusable within a query
-WITH high_earners AS (
-    SELECT emp_id, name, salary, department
-    FROM employees
-    WHERE salary > 80000
-),
-dept_counts AS (
-    SELECT department, COUNT(*) AS cnt FROM high_earners GROUP BY department
+function_name() OVER (
+    PARTITION BY column    -- divides data into groups
+    ORDER BY column        -- specifies order within each group
 )
-SELECT h.name, h.salary, d.cnt AS dept_high_earner_count
-FROM high_earners h
-JOIN dept_counts d ON h.department = d.department;
-
--- Recursive CTE — great for org charts / hierarchies
-WITH RECURSIVE org_chart AS (
-    -- Base case: top-level employees (no manager)
-    SELECT emp_id, name, manager_id, 0 AS level
-    FROM employees WHERE manager_id IS NULL
-
-    UNION ALL
-
-    -- Recursive case
-    SELECT e.emp_id, e.name, e.manager_id, oc.level + 1
-    FROM employees e
-    JOIN org_chart oc ON e.manager_id = oc.emp_id
-)
-SELECT * FROM org_chart ORDER BY level;
 ```
+
+#### Other Window Functions
+
+| Function | Description |
+|----------|-------------|
+| `NTILE(n)` | Divides rows into n buckets |
+| `LAG()` | Access previous row's value |
+| `LEAD()` | Access next row's value |
 
 ---
 
-### 10. Aggregate Functions
-
-```sql
-SELECT
-    COUNT(*)                AS total_rows,
-    COUNT(DISTINCT dept_id) AS unique_depts,
-    SUM(salary)             AS total_payroll,
-    AVG(salary)             AS average_salary,
-    MIN(salary)             AS min_salary,
-    MAX(salary)             AS max_salary,
-    STDDEV(salary)          AS salary_stddev,
-    GROUP_CONCAT(name ORDER BY name SEPARATOR ', ')  -- MySQL only
-FROM employees;
-
--- NULL behaviour: COUNT(*) counts all rows; COUNT(col) skips NULLs
--- AVG, SUM, MIN, MAX all ignore NULLs
-```
+> **Interview Question**
+>
+> **RANK() vs DENSE_RANK() — Tie at 1st place (3 people)**
+>
+> | Position | RANK() | DENSE_RANK() |
+> |----------|--------|--------------|
+> | Tied 1st | 1 | 1 |
+> | Tied 1st | 1 | 1 |
+> | Tied 1st | 1 | 1 |
+> | Next | 4 (skips 2, 3) | 2 |
 
 ---
 
-### 11. Window Functions
+## 9. Order of Execution
 
-Window functions compute across a "window" of related rows **without collapsing them** (unlike GROUP BY).
-
-```sql
--- Syntax: function() OVER (PARTITION BY ... ORDER BY ... ROWS/RANGE ...)
-
--- ROW_NUMBER — unique sequential rank
-SELECT name, department, salary,
-    ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) AS row_num
-FROM employees;
-
--- RANK vs DENSE_RANK
--- RANK:       1, 1, 3 (skips 2)
--- DENSE_RANK: 1, 1, 2 (no skip)
-SELECT name, salary,
-    RANK()       OVER (ORDER BY salary DESC) AS rnk,
-    DENSE_RANK() OVER (ORDER BY salary DESC) AS dense_rnk
-FROM employees;
-
--- NTILE — split into N buckets
-SELECT name, salary, NTILE(4) OVER (ORDER BY salary) AS quartile FROM employees;
-
--- LAG / LEAD — access previous/next row
-SELECT name, salary,
-    LAG(salary, 1)  OVER (PARTITION BY department ORDER BY hire_date) AS prev_salary,
-    LEAD(salary, 1) OVER (PARTITION BY department ORDER BY hire_date) AS next_salary
-FROM employees;
-
--- Running total
-SELECT name, hire_date, salary,
-    SUM(salary) OVER (PARTITION BY department ORDER BY hire_date
-                      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_total
-FROM employees;
-
--- FIRST_VALUE / LAST_VALUE
-SELECT name, salary,
-    FIRST_VALUE(salary) OVER (PARTITION BY department ORDER BY salary DESC) AS highest_in_dept
-FROM employees;
-```
+| Writing Order | Execution Order |
+|---------------|-----------------|
+| `SELECT` | `FROM` |
+| `FROM` | `WHERE` |
+| `WHERE` | `GROUP BY` |
+| `GROUP BY` | `HAVING` |
+| `HAVING` | `SELECT` |
+| `ORDER BY` | `ORDER BY` |
+| `LIMIT` | `LIMIT` |
 
 ---
 
-### 12. Indexes
+> **Interview Questions**
+>
+> **The "Why": SELECT is written first but executed almost last?**
+>
+> Because the database must first **know which table** to pull from (`FROM`), then **filter rows** (`WHERE`), then **group them** (`GROUP BY`), before it can **select/compute** the columns (`SELECT`).
 
-```sql
--- Create index (speeds up reads on large tables)
-CREATE INDEX idx_emp_dept ON employees(department);
-
--- Composite index (column order matters — put most selective first)
-CREATE INDEX idx_dept_salary ON employees(department, salary);
-
--- Unique index
-CREATE UNIQUE INDEX idx_unique_email ON employees(email);
-
--- Full-text index (MySQL)
-CREATE FULLTEXT INDEX idx_ft_name ON employees(name);
-
--- Drop index
-DROP INDEX idx_emp_dept ON employees;       -- MySQL
-DROP INDEX idx_emp_dept;                    -- PostgreSQL (implicit table binding)
-
--- View indexes (MySQL)
-SHOW INDEX FROM employees;
-
--- When indexes help:  WHERE, JOIN ON, ORDER BY, GROUP BY columns
--- When indexes hurt:  Heavy INSERT/UPDATE/DELETE workloads; tiny tables
--- Avoid:  Functions on indexed columns: WHERE YEAR(hire_date) = 2023  ← index not used
--- Better: WHERE hire_date BETWEEN '2023-01-01' AND '2023-12-31'
-```
+> **Tricky Scenario: Alias in WHERE vs ORDER BY**
+>
+> Why can't you use a `SELECT` alias in `WHERE`, but you can in `ORDER BY`?
+>
+> **Answer:** `WHERE` executes **before** `SELECT`, so the alias doesn't exist yet. `ORDER BY` executes **after** `SELECT`, so it can see the alias.
 
 ---
 
-### 13. Constraints
+## 10. Joins
 
-```sql
-CREATE TABLE orders (
-    order_id   INT          PRIMARY KEY,          -- unique + not null
-    user_id    INT          NOT NULL,
-    amount     DECIMAL(10,2) CHECK (amount > 0),  -- value rule
-    status     VARCHAR(20)  DEFAULT 'pending',    -- default value
-    order_date DATE         DEFAULT CURRENT_DATE,
-    UNIQUE (user_id, order_date),                 -- composite unique
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
-        ON DELETE CASCADE                          -- delete orders if user deleted
-        ON UPDATE CASCADE                          -- update FK if PK changes
-);
-
--- ON DELETE options: CASCADE | SET NULL | SET DEFAULT | RESTRICT | NO ACTION
-```
+| Join Type | Returns |
+|-----------|---------|
+| `INNER JOIN` | Only matching rows from both tables |
+| `LEFT JOIN` | All left rows + matching right rows |
+| `RIGHT JOIN` | All right rows + matching left rows |
+| `FULL OUTER JOIN` | All rows from both tables |
+| **Left Exclusive** | All left rows **minus** matching rows |
+| **Right Exclusive** | All right rows **minus** matching rows |
+| **Outer Exclusive** | All rows from both **minus** matching rows |
+| `CROSS JOIN` | Cartesian product (m × n rows) |
+| `SELF JOIN` | Table joined with itself |
 
 ---
 
-### 14. Views
+> **Interview Questions**
+>
+> **Can we join tables without a Foreign Key?**
+>
+> **Answer:** Yes. A `JOIN` only needs a common column with matching values. Foreign Key is a constraint, not a requirement for joining.
 
-```sql
--- Create a view (stored query, not stored data)
-CREATE VIEW active_employees AS
-SELECT emp_id, name, department, salary
-FROM employees
-WHERE status = 'active';
+> **The "Why": LEFT JOIN vs INNER JOIN**
+>
+> Use `LEFT JOIN` when you want **all records from the left table** even if there's no match in the right table.
+>
+> **Real-world example:** Get all customers and their orders — including customers who have placed **no orders yet**.
+> ```sql
+> SELECT customers.name, orders.order_id
+> FROM customers
+> LEFT JOIN orders ON customers.id = orders.customer_id;
+> ```
 
--- Query a view like a table
-SELECT * FROM active_employees WHERE department = 'Engineering';
-
--- Update a view
-CREATE OR REPLACE VIEW active_employees AS
-SELECT emp_id, name, department FROM employees WHERE status = 'active';
-
--- Drop a view
-DROP VIEW active_employees;
-
--- Materialized view (PostgreSQL — stores actual data, must be refreshed)
-CREATE MATERIALIZED VIEW dept_summary AS
-SELECT department, COUNT(*) AS cnt, AVG(salary) AS avg_sal
-FROM employees GROUP BY department;
-
-REFRESH MATERIALIZED VIEW dept_summary;
-```
-
----
-
-### 15. Stored Procedures & Functions
-
-```sql
--- Stored Procedure (MySQL)
-DELIMITER $$
-CREATE PROCEDURE give_raise(IN dept VARCHAR(50), IN pct DECIMAL(5,2))
-BEGIN
-    UPDATE employees
-    SET salary = salary * (1 + pct / 100)
-    WHERE department = dept;
-    SELECT ROW_COUNT() AS rows_updated;
-END$$
-DELIMITER ;
-
-CALL give_raise('Engineering', 10.00);
-
--- Function (returns a value, usable in SELECT)
-DELIMITER $$
-CREATE FUNCTION annual_salary(monthly DECIMAL(10,2))
-RETURNS DECIMAL(12,2)
-DETERMINISTIC
-BEGIN
-    RETURN monthly * 12;
-END$$
-DELIMITER ;
-
-SELECT name, annual_salary(salary) AS yearly FROM employees;
-```
+> **Tricky Scenario: Self Join**
+>
+> When would you absolutely need a `SELF JOIN`?
+>
+> **Answer:** In an **employee-manager hierarchy** where both employees and managers live in the same table:
+> ```sql
+> SELECT e.name AS Employee, m.name AS Manager
+> FROM employees e
+> JOIN employees m ON e.manager_id = m.id;
+> ```
 
 ---
 
-### 16. Triggers
+## 11. Set Operations
 
-```sql
--- Log salary changes automatically
-CREATE TABLE salary_audit (
-    audit_id   INT PRIMARY KEY AUTO_INCREMENT,
-    emp_id     INT,
-    old_salary DECIMAL(10,2),
-    new_salary DECIMAL(10,2),
-    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TRIGGER trg_salary_change
-AFTER UPDATE ON employees
-FOR EACH ROW
-BEGIN
-    IF OLD.salary <> NEW.salary THEN
-        INSERT INTO salary_audit (emp_id, old_salary, new_salary)
-        VALUES (OLD.emp_id, OLD.salary, NEW.salary);
-    END IF;
-END;
-
--- Trigger types: BEFORE / AFTER × INSERT / UPDATE / DELETE
-```
+| Operation | Description |
+|-----------|-------------|
+| `UNION` | Combines results, removes duplicates |
+| `UNION ALL` | Combines results, keeps duplicates |
+| `INTERSECT` | Returns only common rows |
 
 ---
 
-### 17. Transactions & ACID
+## 12. Views & Stored Procedures
 
-```sql
--- Transaction block
-START TRANSACTION;
+| Concept | Description |
+|---------|-------------|
+| **VIEW** | A virtual table based on a saved `SELECT` query |
+| **STORED PROCEDURE** | A saved block of SQL code that can be executed on demand |
 
-UPDATE accounts SET balance = balance - 5000 WHERE account_id = 1;
-UPDATE accounts SET balance = balance + 5000 WHERE account_id = 2;
+---
 
--- If all good:
-COMMIT;
+## 13. Subqueries, Derived Tables, CTEs & CASE Statement
 
--- If something went wrong:
-ROLLBACK;
+| Concept | Description |
+|---------|-------------|
+| **Subquery** | A query nested inside another query |
+| **Derived Table** | A subquery used in the `FROM` clause |
+| **CTE** (Common Table Expression) | A named temporary result set using `WITH` |
+| **CASE Statement** | Conditional logic inside SQL |
 
--- Savepoint (partial rollback)
-START TRANSACTION;
-INSERT INTO orders (user_id, amount) VALUES (1, 200);
-SAVEPOINT sp1;
-INSERT INTO orders (user_id, amount) VALUES (2, 300);
--- Undo only the second insert
-ROLLBACK TO SAVEPOINT sp1;
-COMMIT;
-```
+---
 
-### ACID Properties
+> **Interview Question**
+>
+> **The "Why": CTE vs Subquery**
+>
+> | | Subquery | CTE |
+> |--|----------|-----|
+> | **Readability** | Can get nested and hard to read | Clean, named, readable |
+> | **Reusability** | Must repeat if needed multiple times | Can be referenced multiple times |
+> | **Debugging** | Hard to isolate | Easier to test step by step |
+> | **Recursion** | Not supported | Supported |
+
+---
+
+## 14. ACID Properties & Triggers
 
 | Property | Meaning |
-|---|---|
-| **Atomicity** | All operations in a transaction succeed or all fail — no partial commits |
-| **Consistency** | DB moves from one valid state to another; constraints always satisfied |
-| **Isolation** | Concurrent transactions don't interfere; controlled by isolation levels |
-| **Durability** | Once committed, data survives crashes (written to disk) |
-
-### Isolation Levels (read problems they prevent)
-
-| Level | Dirty Read | Non-Repeatable Read | Phantom Read |
-|---|---|---|---|
-| READ UNCOMMITTED | ✅ possible | ✅ possible | ✅ possible |
-| READ COMMITTED | ❌ prevented | ✅ possible | ✅ possible |
-| REPEATABLE READ | ❌ prevented | ❌ prevented | ✅ possible |
-| SERIALIZABLE | ❌ prevented | ❌ prevented | ❌ prevented |
+|----------|---------|
+| **Atomicity** | All operations succeed or none do |
+| **Consistency** | Data remains valid before and after transaction |
+| **Isolation** | Transactions don't interfere with each other |
+| **Durability** | Committed data persists even after a crash |
 
 ---
 
-### 18. Normalization
-
-Normalization removes redundancy and ensures data integrity.
-
-| Normal Form | Rule |
-|---|---|
-| **1NF** | Each column has atomic values; no repeating groups |
-| **2NF** | 1NF + no partial dependency (every non-key column depends on the whole PK) |
-| **3NF** | 2NF + no transitive dependency (non-key column depends only on PK, not another non-key) |
-| **BCNF** | Stricter 3NF — every determinant must be a candidate key |
-| **4NF** | No multi-valued dependencies |
-
-**Denormalization** = intentionally introducing redundancy for read performance (common in data warehouses, OLAP).
+> **Tricky Scenario**
+>
+> If a system crashes mid-transaction, which ACID property ensures no "half-finished" data?
+>
+> **Answer:** **Atomicity** — the transaction is either fully completed or fully rolled back. No partial state is saved.
 
 ---
 
-### 19. Performance & Optimization
+## 15. SQL Normalization
 
-```sql
--- EXPLAIN / EXPLAIN ANALYZE (see query execution plan)
-EXPLAIN SELECT * FROM employees WHERE department = 'Engineering';
-EXPLAIN ANALYZE SELECT ...;  -- PostgreSQL (also executes the query)
+### Normal Forms Overview
 
--- Tips:
--- 1. Use indexes on JOIN and WHERE columns
--- 2. Avoid SELECT * — fetch only needed columns
--- 3. Avoid functions on indexed columns in WHERE
--- 4. Use EXISTS instead of IN for large subqueries
--- 5. Use LIMIT to restrict result sets
--- 6. Use CTEs for readability (may not always be faster)
--- 7. Avoid N+1 queries — batch with JOINs
--- 8. Partition large tables (range/hash/list partitioning)
+| Form | Rule |
+|------|------|
+| **0NF** | Raw, unnormalized data |
+| **1NF** | Every cell must hold **one value** — no multi-valued cells (e.g., no `"Laptop, Mouse"` in one cell) |
+| **2NF** | Every non-key column must depend on the **whole** primary key — no partial dependency |
+| **3NF** | Every non-key column must depend **only on the primary key** — no transitive dependency |
+| **BCNF** (3.5NF) | For every functional dependency A → B, A must be a **superkey** |
 
--- Slow query: scan-heavy
-SELECT * FROM orders WHERE YEAR(order_date) = 2024;
+### Key Terms
 
--- Fast equivalent: index-friendly range
-SELECT * FROM orders WHERE order_date >= '2024-01-01' AND order_date < '2025-01-01';
-```
+| Term | Definition |
+|------|-----------|
+| **Superkey** | A single or combination of columns that uniquely identifies rows |
+| **Functional Dependency** | A → B means knowing A determines B |
+| **Partial Dependency** | A non-key column depends on only **part** of a composite key |
+| **Transitive Dependency** | A non-key column depends on another non-key column |
 
 ---
 
-### 20. Interview Questions — Conceptual
+> **Interview Questions**
+>
+> **The "Why": Can a database be "too normalized"?**
+>
+> **Answer:** Yes. The performance cost of 3NF:
+> - More tables → more `JOIN` operations
+> - `JOIN`s are expensive on large datasets
+> - Sometimes **denormalization** is intentional for read-heavy systems (e.g., data warehouses)
 
-### Fundamentals
-1. What is the difference between `DELETE`, `TRUNCATE`, and `DROP`?
-2. What is the difference between `WHERE` and `HAVING`?
-3. What is the order of SQL clause execution?
-4. What is a primary key vs. a foreign key?
-5. What is a composite key?
-6. What is the difference between `CHAR` and `VARCHAR`?
-7. What is a NULL value? How does it behave in comparisons and aggregations?
-8. What is the difference between `UNION` and `UNION ALL`?
-
-### Joins
-9. Explain the difference between `INNER JOIN` and `LEFT JOIN` with an example.
-10. What is a CROSS JOIN and when would you use it?
-11. What is a SELF JOIN? Give a real-world use case.
-12. Can you join more than two tables? How?
-
-### Indexes & Performance
-13. What is an index? How does it improve performance?
-14. What is a clustered vs. a non-clustered index?
-15. When should you NOT use an index?
-16. What is query execution plan? How do you read it?
-17. What is the difference between OLTP and OLAP?
-
-### Advanced
-18. What are window functions? How are they different from GROUP BY?
-19. What is the difference between `RANK()`, `DENSE_RANK()`, and `ROW_NUMBER()`?
-20. What is a CTE? When would you prefer a CTE over a subquery?
-21. What is a recursive CTE?
-22. What is a materialized view vs. a regular view?
-23. What are ACID properties? Explain each.
-24. What are database isolation levels? What is a dirty read?
-25. What is normalization? Explain 1NF, 2NF, 3NF with examples.
-26. What is the difference between a stored procedure and a function?
-27. What is a trigger? Give an example use case.
-28. What is deadlock? How do you prevent it?
-29. What is sharding? When would you use it?
-30. Explain the difference between optimistic and pessimistic locking.
-
----
-
-### 21. Interview Questions — Query Writing
-
-> Use this schema for all problems:
-> - `employees(emp_id, name, department, salary, hire_date, manager_id)`
-> - `departments(dept_id, dept_name, location)`
-> - `orders(order_id, user_id, product_id, amount, order_date, status)`
-> - `products(product_id, name, price, category, stock)`
-
-### Easy
-1. Find all employees earning more than ₹80,000.
-2. List all unique departments.
-3. Count the number of employees in each department.
-4. Find the top 5 highest-paid employees.
-5. Find employees who were hired in the last 30 days.
-
-### Medium
-6. Find the second highest salary in the `employees` table.
-7. Get the name of the department with the most employees.
-8. List employees who earn more than their department's average salary.
-9. Find all managers (employees who appear in the `manager_id` column).
-10. Get products that have never been ordered.
-11. Find the running total of salary by hire date per department.
-12. For each department, show the highest-paid and lowest-paid employee in the same row.
-
-### Hard
-13. Find the Nth highest salary (make it generic — handle any N).
-14. Find employees who joined the company in the same month and year as their manager.
-15. For each order, show: order_id, user name, product name, amount, and rank of this order within the user's orders (most expensive = 1).
-16. Write a query to detect duplicate rows in the `employees` table (same name + department).
-17. Find all departments where no employee earns below ₹50,000.
-18. Write a recursive query to output the full management hierarchy (emp → manager → manager's manager).
-
----
-
-### 22. Real-World Scenario Questions
-
-These test system thinking, not just syntax.
-
-1. **E-commerce:** Write a query to find the top 3 best-selling products by total revenue in the last 90 days, along with the percentage of total revenue each represents.
-
-2. **Banking:** A `transactions` table has `(txn_id, account_id, txn_type, amount, txn_date)`. Write a query to find all accounts that had a negative balance at any point in time (cumulative running total dips below 0).
-
-3. **HR Analytics:** An `attendance` table has `(emp_id, date, status)` where status is 'present'/'absent'. Find employees who were absent for 3 or more consecutive days in any given month.
-
-4. **Reporting:** A `sales` table has monthly revenue data. Write a query that shows month-over-month growth percentage.
-
-5. **Data Quality:** You have a `customers` table with duplicate email addresses. Write a query to keep only the most recently created record for each email and delete the rest.
-
-6. **Inventory:** Find products whose stock has fallen below their reorder level, and for each, show how many pending orders are currently waiting to be fulfilled.
-
-7. **Session Analysis:** A `user_events` table stores `(user_id, event_type, event_time)`. Define a session as a sequence of events where no two consecutive events are more than 30 minutes apart. Write a query to assign a session_id to each event.
-
-8. **Recommendation:** Write a query to find "customers who bought product A also frequently bought product B" — the basis of collaborative filtering.
-
----
-
-### 📌 Quick Reference Cheat Sheet
-
-```sql
--- Pattern matching
-WHERE name LIKE 'A%'          -- starts with A
-WHERE name LIKE '%kumar'      -- ends with kumar
-WHERE name LIKE '%raj%'       -- contains raj
-WHERE name REGEXP '^[A-Z]'    -- MySQL regex
-
--- NULL handling
-IS NULL / IS NOT NULL
-COALESCE(col, 'default')      -- returns first non-NULL value
-NULLIF(a, b)                  -- returns NULL if a = b, else returns a
-IFNULL(col, 0)                -- MySQL: replace NULL with 0
-
--- String functions
-CONCAT(first_name, ' ', last_name)
-UPPER(name), LOWER(name)
-TRIM(name), LTRIM(), RTRIM()
-LENGTH(name), CHAR_LENGTH(name)
-SUBSTRING(name, 1, 3)
-REPLACE(name, 'old', 'new')
-
--- Date functions
-NOW(), CURDATE(), CURTIME()
-DATE_ADD(hire_date, INTERVAL 1 YEAR)
-DATEDIFF(NOW(), hire_date)
-DATE_FORMAT(hire_date, '%Y-%m')
-YEAR(hire_date), MONTH(hire_date), DAY(hire_date)
-
--- Conditional
-CASE WHEN ... THEN ... ELSE ... END
-IF(condition, true_val, false_val)   -- MySQL only
-IIF(condition, true_val, false_val)  -- SQL Server only
-```
+> **Tricky Scenario: Single-column PK and 2NF**
+>
+> If a table has a single-column Primary Key, is it automatically in 2NF?
+>
+> **Answer:** **Yes** — 2NF only concerns **partial dependencies**, which can only exist with **composite keys**. A single-column PK has no parts to be partially dependent on, so 2NF is automatically satisfied.
 
 ---
 
