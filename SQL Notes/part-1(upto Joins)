@@ -1,1 +1,241 @@
+Why SQL?
+Traditional Database: data stored in folder format, data retrieval becomes difficult to modify.
+RDBMS: Data stored in rows and columns when one language is required to retrieve—
+I.e SQL(Structured Query Language) helps to do CRUD operations on the data easily.
+Why only MySQL?
+– easy to understand, free of source code.
+What is the difference between DB and DBMS?
+DB: This is the actual collection of organized data. In the traditional sense, data might be stored in a simple folder format, but this can make retrieval and modification difficult.
+DBMS: This is the software that interacts with the user, applications, and the database itself to capture and analyze data(by CRUD) Operations.
+
+Questions:
+The "Why": Why would a company choose a Relational Database (RDBMS) over a simple NoSQL or File-based system for financial transactions?
+
+SQL case-insensitive(some examples)- 
+Question:
+Tricky Scenario: Since SQL is case-insensitive for keywords, does that mean data inside the cells (like 'Apple' vs 'apple') is also always treated as the same during a WHERE clause filter?
+Yes, Instead want only ‘Apple’
+What is collation?
+A set of rules that defines how characters are compared and sorted in a database column.
+
+Ex:
+select product_id
+from product
+where product_name = "LaPTOP";
+
+select product_id
+from product
+where Binary product_name = "LaPTOP"; 
+
+B. Question: If we store passwords in a standard VARCHAR column with a default collation (like utf8mb4_0900_ai_ci), and a user’s password is "P@ssword123", will they be able to log in by typing "p@ssword123"?
+Answer: Yes, they could log in because _ci (Case Insensitive) treats them as the same. For passwords, we must use BINARY or a _bin collation to ensure "A" does not equal "a".
+
+C. Question: Suppose a table has a UNIQUE constraint on the username column. If "Admin" already exists in the table, and a new user tries to register as "admin", will the database allow it?
+Answer: In a _ci (Case Insensitive) collation, the database will throw a "Duplicate Entry" error. In a _cs (Case Sensitive) or _bin collation, it will allow both.
+
+D. Question: I have a list of cities: ['London', 'london', 'LONDON', 'Paris']. If I run SELECT city, COUNT(*) FROM travel GROUP BY city;, how many rows will my result set have?
+Answer: It will likely return 2 rows: London (3) and Paris (1). The database "bunches" all versions of London together because it sees them as identical.
+
+SQL Background execution
+
+Datatypes
+Numeric Datatypes- Fixed DT(Integer(TinyINT, smallINT, MediumINT, INT, BigINT), Decimal(decimal(m, o)), Aprox Numeric DT(Float(4bytes), Real, Double(8 bytes), Precision)
+String Datatypes- Character String(CHAR, VARCHAR, TEXT, ENUM, SET), Binary String Columns(Binary, VARBINARY, BLOB)
+Date and Time- DATE, TIME, DATETIME, TIMESTAMP, YEAR
+
+	Questions:
+Question: What data type would you choose if you wanted to store the distance (rounded to the nearest mile)?
+Ans: INTEGER (or INT) for whole numbers. Use DECIMAL for precision if needed.
+
+
+The "Why": Why would you use VARCHAR(255) instead of just TEXT for every string column?
+VARCHAR: Small to medium VARCHAR data is usually stored inline (directly in the table row). This makes it very fast to fetch because the database engine finds the data exactly.
+TEXT: TEXT data is often stored off-row. The table row only contains a small "pointer" to a different location on the disk where the actual text is kept. Fetching a TEXT column requires an extra "hop" to a different part of the disk,-- slows down the performance.
+
+
+Tricky Scenario: What is the functional difference between DATETIME and TIMESTAMP when a user moves from New York to London?
+Timestamp: server’s zone
+Datetime: won’t depend on that.
+
+The "Decimal" logic: If you are storing money, why is DECIMAL preferred over FLOAT or DOUBLE? 
+FLOAT and DOUBLE are Approximate Data Types. – If you add 0.1 to 0.2 using FLOAT, the result might be 0.30000000000000004 instead of exactly 0.30. In a banking system, those tiny fractions add up to massive missing sums .
+DECIMAL is a Fixed-Point Data Type.--  It stores numbers as "strings" or specialized structures where each digit is preserved exactly as it was entered.
+
+
+     5. Commands
+DDL- CREATE, ALTER, DROP, TRUNCATE
+DML- INSERT, DELETE, UPDATE
+DQL- SELECT
+DCL- GRANT, REVOKE
+TCL- SAVEPOINT, ROLLBACK, COMMIT.
+The "Why": Why is TRUNCATE classified as a DDL command while DELETE is DML, even though both remove data?
+DELETE (DML - Data Manipulation Language): It acts on the data inside the container.
+TRUNCATE (DDL - Data Definition Language): It acts on the container (the table) itself.
+
+Tricky Scenario: If you run a DELETE command without a COMMIT in a transaction, can another user see the changes? What about a DROP command?
+
+
+6. Constraints
+NOT NULL
+UNIQUE KEY
+PRIMARY KEY
+FOREIGN KEY
+Can we make referential integrity without writing using the word Foreignkey?
+COMPOSITE KEY
+DEFAULT
+CHECK
+The "Why": Can a table have multiple UNIQUE keys? If so, why would we still need a PRIMARY KEY?
+Yes, a table can have multiple UNIQUE keys, but you still need a PRIMARY KEY for structural and relational reasons.
+
+
+
+
+
+
+
+
+
+Questions: If a column has a FOREIGN KEY constraint, can you delete the parent row while the child row still exists? How do ON DELETE CASCADE or SET NULL change this?
+By default, when we try to delete a parent row(e.g. Customer) while child row(e.g., an Order) still points to it– throws error..
+	Alternate way is CASCADE and SET NULL
+ON DELETE CASCADE: If you delete the parent, the database automatically deletes all associated child rows.
+ON DELETE SET NULL: If you delete the parent, the child rows stay, but their Foreign Key column is changed to NULL.
+7. Clauses
+WHERE
+GROUPBY
+HAVING
+ORDER BY
+LIMIT
+TOP
+LIKE(%, _ ):
+% (Percent sign): Represents zero, one, or multiple characters.
+_ (Underscore): Represents a single, specific character.
+-- Case 1: Starts with 'a' 
+SELECT * FROM products WHERE name LIKE 'a%';
+-- Case 4: 'a' in the second position 
+SELECT * FROM products WHERE name LIKE '_a%';
+FROM
+AND
+OR
+Questions:
+The "Why": What is the fundamental difference between WHERE and HAVING? Can they be used in the same query? 
+WHERE: Filters individual rows before any grouping or calculations occur. It cannot see aggregate data (like SUM or AVG).
+HAVING: Filters grouped data after the GROUP BY clause has been processed. It is specifically designed to work with aggregate functions.
+
+Scenario: Can you use HAVING without a GROUP BY clause?
+Answer: Yes, but it treats the entire table as a single group. For example, SELECT SUM(salary) FROM Employees HAVING SUM(salary) > 1000000; will return the sum only if the total company payroll exceeds a million.
+8. Operators
+Arithmetic Operators: +, -, *, /, %--- 
+What about the // division.
+
+Assignment Operators: +=, -=, *=, /=, %=
+Comparison Operators: <, >, <=, >=, =, !=/<>(Not equal to operator)
+Logical Operators: AND(&&), OR(||), NOT(Inversion Operator)
+Bitwise Operators: &, ^(XOR), |, ~(inversion), 
+Questions:
+Tricky Scenario: Why does SELECT * FROM users WHERE age != NULL return zero results, even if there are users with no age listed? (Hint: The behavior of NULL).
+NULL is not a Value: In SQL, NULL does not represent zero, an empty string, or a space. It represents "Unknown" or "Missing Data."
+
+9. Functions
+	a. Aggregate Functions- COUNT(), SUM(), AVG(), MIN(), MAX().
+	Miscellaneous functions: abs(), round()(rounds some nums), ceil()/ceiling()-(rounds up number), floor()-(rounds down)
+	b. Date Time Functions- NOW(), CURDATE()/CURRENT_DATE(), CURRENT_TIME()/CURTIME(), DATE(), DATE_FORMAT()[%a(weekends), %b(months JAN-DEC), %c(Month-Numeric(1-12)), %d(day of month(1-31), %H(24hr clock)/%h(12 Hour), %i(Minute), %S/%s(Seconds)], by interval-date_add(), date_sub(), by dates- datediff(), to_days().
+Question:
+How different date formattings are used in DATE_FORMAT()?
+
+	c. String Functions- Concat(), char_length(), upper(), lower(), length(), replace(), substring()/substr(), left(), right(), trim(), reverse(), ASCII(), char(), rpad(), lpad().
+Question:
+Difference between char_length() and length()?
+CHAR_LENGTH(): Counts the number of characters in a string
+LENGTH(): Counts the number of bytes the string occupies in storage.
+Difference between ASCII() and char()?
+ASCII() : ASCII value of character
+CHAR() : Character from ASCII number
+
+
+
+	d. Window Functions- i. Ranking Window Functions: RANK(), DENSE_RANK(), Row_number(), Percent_rank()
+Over clause- used to specify window on 
+Partition by- divide the data into groups
+Order by - specify order of rows within each group.
+ii. Ntile()- Lag(), Lead()
+
+Questions:
+The "Why": When using RANK() vs DENSE_RANK(), what happens to the sequence of numbers if three people are tied for 1st place?
+RANK()-skips sequence rank for duplicates
+DENSERANK()- doesn’t skip.
+Tricky Scenario: Does COUNT(*) and COUNT(column_name) always return the same result? If not, why? 
+COUNT(*): This counts every single row in the table, regardless of what data is inside.
+COUNT(column_name): This only counts rows where the specified column is NOT NULL. 
+2. How to select random 10 rows from a table?
+	SELECT * FROM tbl ORDER BY RAND() LIMIT 10;
+3. Examine the following code. What will the value of price be if the statement finds a NULL value? SELECT name, ISNULL(price, 50) FROM PRODUCTS
+50 (default). NULL is not zero or empty. Use IFNULL (MySQL), COALESCE (standard), ISNULL (SQL Server), NVL (Oracle).
+Example:
+SELECT name, COALESCE(price, 50) FROM products;
+
+10. Order of Execution:
+By Writing:
+SELECT
+FROM
+WHERE
+GROUP BY
+HAVING
+ORDER BY
+LIMIT
+By Execution:
+		FROM
+		WHERE
+		GROUP BY
+		HAVING
+		SELECT
+		ORDER BY 
+		LIMIT
+
+	Questions:
+	The "Why": If SELECT is written first, why is it executed almost last?
+Tricky Scenario: Why can't you use an alias created in the SELECT clause inside a WHERE clause, but you can use it in the ORDER BY clause?
+
+     11. Joins:
+Left Join(all left + matching right)
+Right Join (all right + matching left)
+Inner Join(matching)
+Outer Join(all from both)
+Left Exclusive(all left- matching right)
+Right Exclusive(all right - matching left)
+Outer Exclusive(all from both- matching)
+Cross Join/Cartesian Product(mxn).
+Self Join(table with itself)
+	Questions:
+Can we join tables without foreign key?
+Yes.
+The "Why": When should you use a LEFT JOIN instead of an INNER JOIN? Give a    real-world example.
+    12. Set Operations- Union, Union ALL, Intersect
+
+Day-2:
+    13. VIEW, STORED PROCEDURE.
+    14. Sub Queries, Derived Table, CTE, CASE Statement
+Tricky Scenario: What is a "Self Join," and in what real-world hierarchy (like an employee-manager table) would you absolutely need it?
+    
+    14. ACID Properties, Triggers
+Questions:
+The "Why": Why would you use a CTE (Common Table Expression) instead of a regular Subquery?
+Tricky Scenario: In ACID properties, if a system crashes mid-transaction, which property ensures that the database doesn't end up with "half-finished" data? 
+
+ 15. SQL Normalisation(1NF, 2NF, 3NF):
+Normalisation: keeping data in which each table should store information about only one thing without data redundancy.
+0NF:
+1NF: every cell must hold one value (no "Laptop, Mouse" in a single cell)
+Ex:
+
+2NF:says every column must depend on the whole primary key, it means the table shouldn’t be in partial dependency .
+3NF: says columns should depend only on the primary key, not on each other.
+BCNF(Boyce codd Normal form):
+Also called as 3.5NF
+Functional dependency A→B, then A has to be the super key of that table, where superkey→is a single/multiple key which identifies rows in a table.
+
+Questions:
+The "Why": We normalize to reduce redundancy, but can a database be "too normalized"? What is the performance cost of reaching 3NF?
+
+Tricky Scenario: If a table has a single-column Primary Key, is it automatically in 2NF? Why or why not?
 
