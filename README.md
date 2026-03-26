@@ -2,7 +2,6 @@
 
 > **Structured Query Language** — A complete reference from basics to advanced concepts, including tricky scenarios and interview questions.
 
----
 
 ## Table of Contents
 
@@ -22,7 +21,6 @@
 14. [ACID Properties & Triggers](#14-acid-properties--triggers)
 15. [SQL Normalization](#15-sql-normalization)
 
----
 
 ## 1. What is SQL?
 
@@ -42,13 +40,12 @@
 - Easy to understand
 - Free and open source
 
----
 
 > **Interview Question**
 >
 > **The "Why":** Why would a company choose a Relational Database (RDBMS) over a simple NoSQL or File-based system for financial transactions?
 
----
+
 
 ## 2. SQL Case Sensitivity & Collation
 
@@ -74,7 +71,7 @@ WHERE BINARY product_name = 'LaPTOP';
 
 ---
 
-> 💡 **Tricky Scenarios**
+> **Tricky Scenarios**
 >
 > **A. Default Collation & Keywords**
 > Since SQL is case-insensitive for keywords, does that mean data inside cells (like `'Apple'` vs `'apple'`) is also always treated as the same during a `WHERE` clause filter?
@@ -100,7 +97,6 @@ WHERE BINARY product_name = 'LaPTOP';
 > ```
 > **Answer:** Returns **2 rows** — `London (3)` and `Paris (1)`. All London variants are treated as identical under `_ci` collation.
 
----
 
 ## 3. Data Types
 
@@ -159,8 +155,8 @@ WHERE BINARY product_name = 'LaPTOP';
 >
 > Why is `DECIMAL` preferred over `FLOAT` or `DOUBLE` for money?
 >
-> - `FLOAT`/`DOUBLE` → **Approximate** → `0.1 + 0.2 = 0.30000000000000004` ❌
-> - `DECIMAL` → **Fixed-Point** → Each digit preserved exactly ✅
+> - `FLOAT`/`DOUBLE` → **Approximate** → `0.1 + 0.2 = 0.30000000000000004` 
+> - `DECIMAL` → **Fixed-Point** → Each digit preserved exactly 
 >
 > In banking, floating-point errors accumulate into massive discrepancies.
 
